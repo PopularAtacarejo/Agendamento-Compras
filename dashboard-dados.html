@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Dados - Sistema de Agendamento</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/99R7YqxF/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="dashboard-dados">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Carregando...</p>
+        <p class="loading-subtext"></p>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">
+                    <img class="brand-logo-image" src="https://i.ibb.co/sJQDggdR/Logo-2025.png" alt="Popular Atacarejo">
+                </span>
+                <span class="logo-text">Sistema de Agendamento</span>
+            </a>
+            <nav class="nav-links nav-links-public">
+                <a href="agendar.html" class="nav-link nav-link-public">Agendar Visita</a>
+                <a href="dashboard-dados.html" class="nav-link nav-link-public active" id="linkDashboardDados">Dashboard de Dados</a>
+                <a href="usuarios.html" class="nav-link nav-link-public" id="linkUsuarios">Usuarios</a>
+            </nav>
+            <div class="user-menu">
+                <button class="profile-menu-button" id="profileMenuButton" type="button" aria-expanded="false">
+                    <span class="profile-avatar">
+                        <img id="userAvatar" alt="Foto do usuario">
+                        <span class="profile-avatar-fallback" id="userAvatarFallback">U</span>
+                    </span>
+                    <span class="profile-trigger-info">
+                        <span class="profile-trigger-name" id="userName">-</span>
+                        <span class="profile-trigger-role" id="userRole">-</span>
+                    </span>
+                    <span class="profile-menu-caret">v</span>
+                </button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <span class="profile-avatar">
+                            <img id="dropdownUserAvatar" alt="Foto do usuario">
+                            <span class="profile-avatar-fallback" id="dropdownUserAvatarFallback">U</span>
+                        </span>
+                        <div>
+                            <div class="profile-dropdown-name" id="dropdownUserName">-</div>
+                            <div class="profile-dropdown-role" id="dropdownUserRole">-</div>
+                        </div>
+                    </div>
+                    <a href="perfil.html" class="profile-dropdown-link">Meu Perfil <span>></span></a>
+                    <button class="profile-dropdown-action danger" type="button" onclick="logout()">Sair <span>></span></button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="alertContainer"></div>
+
+        <section class="management-hero">
+            <div>
+                <span class="management-eyebrow">Painel gerencial</span>
+                <h1 class="management-page-title">Dashboard de Dados</h1>
+                <p class="management-page-description">
+                    Visao gerencial do desempenho dos compradores, das empresas recebidas e dos vendedores com retorno.
+                </p>
+            </div>
+            <div class="management-hero-highlight">
+                <span class="management-hero-label">Comprador em destaque</span>
+                <strong id="mgTopComprador">Aguardando dados</strong>
+                <span id="mgTopCompradorResumo">Assim que houver visitas, o ranking aparece aqui.</span>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <div class="stat-card confirmado">
+                <div class="stat-value" id="mgTotalVisitas">0</div>
+                <div class="stat-label">Visitas registradas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="mgTotalCompradores">0</div>
+                <div class="stat-label">Compradores com visitas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="mgTotalEmpresas">0</div>
+                <div class="stat-label">Empresas atendidas</div>
+            </div>
+            <div class="stat-card pendente">
+                <div class="stat-value" id="mgTotalRetornos">0</div>
+                <div class="stat-label">Vendedores recorrentes</div>
+            </div>
+        </section>
+
+        <section class="analytics-grid">
+            <article class="insight-card" id="statusOverview">
+                <div class="empty-state">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p class="loading-text mt-3">Carregando status...</p>
+                </div>
+            </article>
+
+            <article class="insight-card" id="buyersRanking">
+                <div class="empty-state">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p class="loading-text mt-3">Carregando ranking...</p>
+                </div>
+            </article>
+
+            <article class="insight-card" id="companyOverview">
+                <div class="empty-state">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p class="loading-text mt-3">Carregando empresas...</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="management-section">
+            <div class="management-section-header">
+                <div>
+                    <h2 class="management-section-title">Desempenho por comprador</h2>
+                    <p class="management-section-subtitle">
+                        Indicadores de volume, sazonalidade e recorrencia por comprador.
+                    </p>
+                </div>
+            </div>
+
+            <div id="dashboardDadosList" class="management-grid">
+                <div class="empty-state">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p class="loading-text mt-3">Carregando dados gerenciais...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p class="site-footer-text">Popular Atacarejo 2026 - Todos os Direitos Reservados</p>
+        <p class="site-footer-credit">Sistema Desenvolvido por - Jeferson</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/runtime-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

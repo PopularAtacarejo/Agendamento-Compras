@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Sistema de Agendamento</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/99R7YqxF/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="usuarios">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Carregando...</p>
+        <p class="loading-subtext"></p>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">
+                    <img class="brand-logo-image" src="https://i.ibb.co/sJQDggdR/Logo-2025.png" alt="Popular Atacarejo">
+                </span>
+                <span class="logo-text">Sistema de Agendamento</span>
+            </a>
+            <nav class="nav-links nav-links-public">
+                <a href="agendar.html" class="nav-link nav-link-public">Agendar Visita</a>
+                <a href="dashboard-dados.html" class="nav-link nav-link-public" id="linkDashboardDados">Dashboard de Dados</a>
+                <a href="usuarios.html" class="nav-link nav-link-public active">Usuarios</a>
+            </nav>
+            <div class="user-menu">
+                <button class="profile-menu-button" id="profileMenuButton" type="button" aria-expanded="false">
+                    <span class="profile-avatar">
+                        <img id="userAvatar" alt="Foto do usuario">
+                        <span class="profile-avatar-fallback" id="userAvatarFallback">U</span>
+                    </span>
+                    <span class="profile-trigger-info">
+                        <span class="profile-trigger-name" id="userName">-</span>
+                        <span class="profile-trigger-role" id="userRole">-</span>
+                    </span>
+                    <span class="profile-menu-caret">▼</span>
+                </button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <span class="profile-avatar">
+                            <img id="dropdownUserAvatar" alt="Foto do usuario">
+                            <span class="profile-avatar-fallback" id="dropdownUserAvatarFallback">U</span>
+                        </span>
+                        <div>
+                            <div class="profile-dropdown-name" id="dropdownUserName">-</div>
+                            <div class="profile-dropdown-role" id="dropdownUserRole">-</div>
+                        </div>
+                    </div>
+                    <a href="perfil.html" class="profile-dropdown-link">Meu Perfil <span>›</span></a>
+                    <button class="profile-dropdown-action danger" type="button" onclick="logout()">Sair <span>›</span></button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="alertContainer"></div>
+
+        <div style="margin: 32px 0;">
+            <h1 style="font-size: 28px; font-weight: 700;">Gestao de Usuarios</h1>
+            <p style="color: var(--text-secondary); margin-top: 8px;">Administradores criam compradores. Desenvolvedores criam qualquer perfil.</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="card-title">Criar usuario</h2>
+                <p class="card-subtitle">Preencha os dados abaixo</p>
+            </div>
+            <div class="card-body">
+                <form id="usuarioForm">
+                    <div class="form-group">
+                        <label for="nomeUsuario" class="form-label required">Nome</label>
+                        <input type="text" id="nomeUsuario" class="form-control" required>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div class="form-group">
+                            <label for="emailUsuario" class="form-label required">Email</label>
+                            <input type="email" id="emailUsuario" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="senhaUsuario" class="form-label required">Senha</label>
+                            <input type="password" id="senhaUsuario" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div class="form-group">
+                            <label for="tipoUsuario" class="form-label required">Perfil</label>
+                            <select id="tipoUsuario" class="form-control" required>
+                                <option value="comprador">comprador</option>
+                                <option value="administrador">administrador</option>
+                                <option value="desenvolvedor">desenvolvedor</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:center; gap:10px; padding-top:32px;">
+                            <input type="checkbox" id="ativoUsuario" checked>
+                            <label for="ativoUsuario" class="form-label" style="margin:0;">Usuario ativo</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">Criar usuario</button>
+                </form>
+            </div>
+        </div>
+
+        <div>
+            <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 16px;">Usuarios cadastrados</h2>
+            <div id="usuariosList">
+                <div class="empty-state">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p class="loading-text mt-3">Carregando usuarios...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p class="site-footer-text">Popular Atacarejo 2026 - Todos os Direitos Reservados</p>
+        <p class="site-footer-credit">Sistema Desenvolvido por - Jeferson</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/runtime-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

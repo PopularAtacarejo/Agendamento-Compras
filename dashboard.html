@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Agendamento</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/99R7YqxF/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="dashboard">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Carregando...</p>
+        <p class="loading-subtext"></p>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">
+                    <img class="brand-logo-image" src="https://i.ibb.co/sJQDggdR/Logo-2025.png" alt="Popular Atacarejo">
+                </span>
+                <span class="logo-text">Sistema de Agendamento</span>
+            </a>
+            <nav class="nav-links nav-links-public">
+                <a href="agendar.html" class="nav-link nav-link-public">Agendar Visita</a>
+                <a href="dashboard.html" class="nav-link nav-link-public active">Meus Agendamentos</a>
+                <a href="dashboard-dados.html" class="nav-link nav-link-public" id="linkDashboardDados">Dashboard de Dados</a>
+                <a href="disponibilidade.html" class="nav-link nav-link-public" id="linkDisponibilidade">Minha Disponibilidade</a>
+            </nav>
+            <div class="user-menu">
+                <button class="profile-menu-button" id="profileMenuButton" type="button" aria-expanded="false">
+                    <span class="profile-avatar">
+                        <img id="userAvatar" alt="Foto do usuario">
+                        <span class="profile-avatar-fallback" id="userAvatarFallback">U</span>
+                    </span>
+                    <span class="profile-trigger-info">
+                        <span class="profile-trigger-name" id="userName">-</span>
+                        <span class="profile-trigger-role" id="userRole">comprador</span>
+                    </span>
+                    <span class="profile-menu-caret">▼</span>
+                </button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <span class="profile-avatar">
+                            <img id="dropdownUserAvatar" alt="Foto do usuario">
+                            <span class="profile-avatar-fallback" id="dropdownUserAvatarFallback">U</span>
+                        </span>
+                        <div>
+                            <div class="profile-dropdown-name" id="dropdownUserName">-</div>
+                            <div class="profile-dropdown-role" id="dropdownUserRole">comprador</div>
+                        </div>
+                    </div>
+                    <a href="perfil.html" class="profile-dropdown-link">Meu Perfil <span>›</span></a>
+                    <button class="profile-dropdown-action danger" type="button" onclick="logout()">Sair <span>›</span></button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="alertContainer"></div>
+
+        <div style="margin: 32px 0;">
+            <h1 style="font-size: 28px; font-weight: 700;">Meus Agendamentos</h1>
+            <p style="color: var(--text-secondary); margin-top: 8px;">Gerencie suas visitas agendadas</p>
+            <div style="margin-top: 16px;">
+                <a href="disponibilidade.html" class="btn btn-secondary">Definir horarios livres</a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card pendente">
+                <div class="stat-value" id="statPendente">0</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+            <div class="stat-card confirmado">
+                <div class="stat-value" id="statConfirmado">0</div>
+                <div class="stat-label">Confirmados</div>
+            </div>
+            <div class="stat-card concluido">
+                <div class="stat-value" id="statConcluido">0</div>
+                <div class="stat-label">Concluidos</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-status="todos">Todos</button>
+            <button class="tab-btn" data-status="pendente">Pendentes</button>
+            <button class="tab-btn" data-status="confirmado">Confirmados</button>
+            <button class="tab-btn" data-status="concluido">Concluidos</button>
+            <button class="tab-btn" data-status="nao_compareceu">Nao compareceu</button>
+            <button class="tab-btn" data-status="desistiu">Desistiu</button>
+            <button class="tab-btn" data-status="cancelado">Cancelados</button>
+        </div>
+
+        <div id="agendamentosList">
+            <div class="empty-state">
+                <div class="spinner" style="margin: 0 auto;"></div>
+                <p class="loading-text mt-3">Carregando agendamentos...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p class="site-footer-text">Popular Atacarejo 2026 - Todos os Direitos Reservados</p>
+        <p class="site-footer-credit">Sistema Desenvolvido por - Jeferson</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/runtime-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

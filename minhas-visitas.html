@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Visitas - Sistema de Agendamento</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/99R7YqxF/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="minhas-visitas">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Carregando...</p>
+        <p class="loading-subtext"></p>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">
+                    <img class="brand-logo-image" src="https://i.ibb.co/sJQDggdR/Logo-2025.png" alt="Popular Atacarejo">
+                </span>
+                <span class="logo-text">Sistema de Agendamento</span>
+            </a>
+            <nav class="nav-links nav-links-public">
+                <a href="agendar.html" class="nav-link nav-link-public nav-link-book">Agendar Visita</a>
+                <a href="minhas-visitas.html" class="nav-link nav-link-public nav-link-search active">Minhas Visitas</a>
+                <a href="login.html" class="nav-link nav-link-public">Area do Comprador</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="alertContainer"></div>
+
+        <div style="max-width: 860px; margin: 32px auto 24px;">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title" style="font-size: 28px;">Consultar Minhas Visitas</h1>
+                    <p class="card-subtitle">Informe o telefone usado no agendamento para ver suas visitas.</p>
+                </div>
+                <div class="card-body">
+                    <form id="buscarVisitasForm">
+                        <div style="display:grid; grid-template-columns: 1fr auto; gap: 16px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="telefoneBusca" class="form-label required">Telefone do vendedor</label>
+                                <input type="tel" id="telefoneBusca" class="form-control" placeholder="(11) 99999-9999" required>
+                            </div>
+                            <div style="display:flex; align-items:end;">
+                                <button type="submit" class="btn btn-primary btn-lg">Buscar visitas</button>
+                            </div>
+                        </div>
+                        <p class="form-hint" style="margin-top: 10px;">A busca mostra data, hora, comprador, status e permite desistir da visita informando o motivo.</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <section style="max-width: 860px; margin: 0 auto 40px;">
+            <div id="visitasList">
+                <div class="empty-state">
+                    <div class="empty-icon">VS</div>
+                    <div class="empty-title">Consulte suas visitas</div>
+                    <div class="empty-description">Digite o telefone usado no cadastro do agendamento para ver seu historico.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p class="site-footer-text">Popular Atacarejo 2026 - Todos os Direitos Reservados</p>
+        <p class="site-footer-credit">Sistema Desenvolvido por - Jeferson</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/runtime-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

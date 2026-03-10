@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Agendamento - Setor de Compras</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/99R7YqxF/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="home">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Carregando...</p>
+        <p class="loading-subtext"></p>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">
+                    <img class="brand-logo-image" src="https://i.ibb.co/sJQDggdR/Logo-2025.png" alt="Popular Atacarejo">
+                </span>
+                <span class="logo-text">Sistema de Agendamento</span>
+            </a>
+            <nav class="nav-links nav-links-public">
+                <a href="agendar.html" class="nav-link nav-link-public nav-link-book">Agendar Visita</a>
+                <a href="minhas-visitas.html" class="nav-link nav-link-public nav-link-search">Minhas Visitas</a>
+                <a href="login.html" class="nav-link nav-link-public">Area do Comprador</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="alertContainer"></div>
+
+        <section style="text-align: center; padding: 80px 20px;">
+            <h1 style="font-size: 48px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">
+                Sistema de Agendamento
+            </h1>
+            <h2 style="font-size: 24px; color: var(--text-secondary); font-weight: 400; margin-bottom: 32px;">
+                Setor de Compras
+            </h2>
+            <p style="max-width: 680px; margin: 0 auto 40px; color: var(--text-secondary); font-size: 18px;">
+                Agende suas visitas com os compradores de forma rapida e organizada.
+                Os horarios exibidos sao definidos pelos proprios compradores no sistema.
+                Depois, consulte suas proprias visitas pelo telefone para acompanhar data, horario e status.
+            </p>
+
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="agendar.html" class="btn btn-primary btn-lg">Agendar Visita</a>
+                <a href="minhas-visitas.html" class="btn btn-secondary btn-lg">Minhas Visitas</a>
+                <a href="login.html" class="btn btn-secondary btn-lg">Area do Comprador</a>
+            </div>
+        </section>
+
+        <section class="home-feature-grid">
+            <article class="home-feature-card">
+                <div class="home-feature-icon">01</div>
+                <div class="home-feature-label">Fluxo para vendedores</div>
+                <h3 class="home-feature-title">Agende e acompanhe sua visita</h3>
+                <p class="home-feature-text">
+                    Escolha um comprador, selecione um horario liberado e acompanhe o andamento da visita pelo telefone.
+                </p>
+                <ul class="home-feature-list">
+                    <li>Consulta com data, hora e comprador</li>
+                    <li>Status atualizado da visita</li>
+                    <li>Busca simples pelo numero informado</li>
+                </ul>
+                <a href="agendar.html" class="home-feature-link">Ir para agendamento</a>
+            </article>
+
+            <article class="home-feature-card">
+                <div class="home-feature-icon">02</div>
+                <div class="home-feature-label">Area do comprador</div>
+                <h3 class="home-feature-title">Controle seus horarios e atendimentos</h3>
+                <p class="home-feature-text">
+                    O comprador define os horarios livres, confirma visitas e registra observacoes do atendimento.
+                </p>
+                <ul class="home-feature-list">
+                    <li>Agenda propria por dia e hora</li>
+                    <li>Confirmacao e conclusao de visitas</li>
+                    <li>Comentarios privados do atendimento</li>
+                </ul>
+                <a href="login.html" class="home-feature-link">Entrar na area do comprador</a>
+            </article>
+
+            <article class="home-feature-card home-feature-card-accent">
+                <div class="home-feature-icon">03</div>
+                <div class="home-feature-label">Consulta rapida</div>
+                <h3 class="home-feature-title">Veja o status sem precisar fazer login</h3>
+                <p class="home-feature-text">
+                    O vendedor pode consultar as visitas dele e verificar se o atendimento esta pendente, confirmado ou concluido.
+                </p>
+                <ul class="home-feature-list">
+                    <li>Historico por telefone</li>
+                    <li>Comprador responsavel exibido</li>
+                    <li>Status visivel em poucos segundos</li>
+                </ul>
+                <a href="minhas-visitas.html" class="home-feature-link">Consultar minhas visitas</a>
+            </article>
+        </section>
+
+        <section style="margin-top: 80px; text-align: center;">
+            <h2 style="font-size: 32px; font-weight: 600; margin-bottom: 40px;">Como Funciona</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 32px;">
+                <div>
+                    <div style="width: 60px; height: 60px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin: 0 auto 16px;">1</div>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Escolha o Comprador</h3>
+                    <p style="color: var(--text-secondary);">Selecione o comprador com quem deseja se reunir.</p>
+                </div>
+
+                <div>
+                    <div style="width: 60px; height: 60px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin: 0 auto 16px;">2</div>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Selecione Data e Hora</h3>
+                    <p style="color: var(--text-secondary);">Escolha um horario disponivel no calendario.</p>
+                </div>
+
+                <div>
+                    <div style="width: 60px; height: 60px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin: 0 auto 16px;">3</div>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Preencha seus Dados</h3>
+                    <p style="color: var(--text-secondary);">Informe seus dados para completar o agendamento.</p>
+                </div>
+
+                <div>
+                    <div style="width: 60px; height: 60px; background: var(--success-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin: 0 auto 16px;">4</div>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Acompanhe o Status</h3>
+                    <p style="color: var(--text-secondary);">Consulte depois em Minhas Visitas se o comprador confirmou ou concluiu a visita.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" style="margin-top: 80px;">
+        <p class="site-footer-text">Popular Atacarejo 2026 - Todos os Direitos Reservados</p>
+        <p class="site-footer-credit">Sistema Desenvolvido por - Jeferson</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/runtime-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

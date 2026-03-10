@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil - Sistema de Agendamento</title>
+    <link rel="icon" type="image/png" href="https://i.ibb.co/99R7YqxF/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .profile-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid,
+            .profile-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-page="perfil">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Carregando...</p>
+        <p class="loading-subtext"></p>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">
+                    <img class="brand-logo-image" src="https://i.ibb.co/sJQDggdR/Logo-2025.png" alt="Popular Atacarejo">
+                </span>
+                <span class="logo-text">Sistema de Agendamento</span>
+            </a>
+            <nav class="nav-links nav-links-public">
+                <a href="agendar.html" class="nav-link nav-link-public">Agendar Visita</a>
+                <a href="dashboard.html" class="nav-link nav-link-public" id="linkDashboard">Meus Agendamentos</a>
+                <a href="dashboard-dados.html" class="nav-link nav-link-public" id="linkDashboardDados">Dashboard de Dados</a>
+                <a href="disponibilidade.html" class="nav-link nav-link-public" id="linkDisponibilidade">Minha Disponibilidade</a>
+                <a href="usuarios.html" class="nav-link nav-link-public" id="linkUsuarios">Usuarios</a>
+                <a href="perfil.html" class="nav-link nav-link-public active">Meu Perfil</a>
+            </nav>
+            <div class="user-menu">
+                <button class="profile-menu-button" id="profileMenuButton" type="button" aria-expanded="false">
+                    <span class="profile-avatar">
+                        <img id="userAvatar" alt="Foto do usuario">
+                        <span class="profile-avatar-fallback" id="userAvatarFallback">U</span>
+                    </span>
+                    <span class="profile-trigger-info">
+                        <span class="profile-trigger-name" id="userName">-</span>
+                        <span class="profile-trigger-role" id="userRole">-</span>
+                    </span>
+                    <span class="profile-menu-caret">▼</span>
+                </button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <span class="profile-avatar">
+                            <img id="dropdownUserAvatar" alt="Foto do usuario">
+                            <span class="profile-avatar-fallback" id="dropdownUserAvatarFallback">U</span>
+                        </span>
+                        <div>
+                            <div class="profile-dropdown-name" id="dropdownUserName">-</div>
+                            <div class="profile-dropdown-role" id="dropdownUserRole">-</div>
+                        </div>
+                    </div>
+                    <a href="perfil.html" class="profile-dropdown-link">Meu Perfil <span>›</span></a>
+                    <button class="profile-dropdown-action danger" type="button" onclick="logout()">Sair <span>›</span></button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="alertContainer"></div>
+
+        <div style="margin: 32px 0;">
+            <h1 style="font-size: 28px; font-weight: 700;">Meu Perfil</h1>
+            <p style="color: var(--text-secondary); margin-top: 8px;">Atualize sua foto, email, telefone e senha.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form id="perfilForm">
+                    <div class="profile-grid">
+                        <div>
+                            <div style="width:180px; height:180px; border-radius:50%; border:2px dashed var(--border-color); display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--background-color); margin-bottom:12px;">
+                                <img id="profilePreview" alt="Preview da foto" style="display:none; width:100%; height:100%; object-fit:cover;">
+                                <span id="profilePlaceholder" class="text-muted">Sem foto</span>
+                            </div>
+                            <label for="perfilFoto" class="btn btn-secondary btn-sm">Escolher foto</label>
+                            <input type="file" id="perfilFoto" accept="image/*" class="hidden">
+                            <p class="form-hint">A imagem sera salva no seu perfil.</p>
+                        </div>
+
+                        <div>
+                            <div class="form-group">
+                                <label for="perfilNome" class="form-label required">Nome</label>
+                                <input type="text" id="perfilNome" class="form-control" required>
+                            </div>
+
+                            <div class="profile-row">
+                                <div class="form-group">
+                                    <label for="perfilEmail" class="form-label required">Email</label>
+                                    <input type="email" id="perfilEmail" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="perfilTelefone" class="form-label">Telefone</label>
+                                    <input type="tel" id="perfilTelefone" class="form-control" placeholder="(11) 99999-9999">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="perfilTipo" class="form-label">Perfil</label>
+                                <input type="text" id="perfilTipo" class="form-control" disabled>
+                            </div>
+
+                            <div class="form-group hidden" id="buyerWhatsappGroup">
+                                <label for="perfilMensagemWhatsapp" class="form-label">Mensagem padrao do WhatsApp</label>
+                                <textarea
+                                    id="perfilMensagemWhatsapp"
+                                    class="form-control"
+                                    rows="5"
+                                    placeholder="Ola, {nome_vendedor}. Aqui e {nome_comprador}. Sua visita esta registrada para {data} as {hora}."
+                                ></textarea>
+                                <p class="form-hint">
+                                    Variaveis disponiveis: {nome_vendedor}, {nome_comprador}, {empresa}, {data}, {hora}, {status}.
+                                </p>
+                            </div>
+
+                            <div style="padding:16px; border:1px solid var(--border-color); border-radius:var(--radius-md); margin-top:8px;">
+                                <h3 style="font-size:16px; font-weight:600; margin-bottom:12px;">Alterar senha</h3>
+                                <div class="profile-row">
+                                    <div class="form-group">
+                                        <label for="senhaAtual" class="form-label">Senha atual</label>
+                                        <div class="input-action-row">
+                                            <input type="password" id="senhaAtual" class="form-control">
+                                            <button type="button" class="password-toggle" data-target="senhaAtual">Ver</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="novaSenha" class="form-label">Nova senha</label>
+                                        <div class="input-action-row">
+                                            <input type="password" id="novaSenha" class="form-control">
+                                            <button type="button" class="password-toggle" data-target="novaSenha">Ver</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="form-hint">Preencha os campos acima somente se quiser trocar a senha.</p>
+                            </div>
+
+                            <div style="display:flex; gap:16px; margin-top:24px;">
+                                <button type="submit" class="btn btn-primary btn-lg">Salvar perfil</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p class="site-footer-text">Popular Atacarejo 2026 - Todos os Direitos Reservados</p>
+        <p class="site-footer-credit">Sistema Desenvolvido por - Jeferson</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/runtime-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
