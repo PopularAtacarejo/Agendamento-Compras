@@ -145,6 +145,7 @@ async function apiRequest(endpoint, options = {}) {
     const url = `${API_URL}${endpoint}`;
     const token = getAuthToken();
     const isFormData = options.body instanceof FormData;
+    let loadingTimeout = null;
 
     const defaultHeaders = {};
     if (!isFormData) {
@@ -163,15 +164,15 @@ async function apiRequest(endpoint, options = {}) {
     };
 
     try {
-        showLoading(
-            'Conectando ao servidor...',
-            'Se o servidor estiver dormindo, pode levar ate 1 minuto para acordar.'
-        );
+        loadingTimeout = setTimeout(() => {
+            showLoading('Carregando dados...');
+        }, 700);
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), SERVER_WAKEUP_TIMEOUT);
         const response = await fetch(url, { ...finalOptions, signal: controller.signal });
         clearTimeout(timeout);
+        clearTimeout(loadingTimeout);
 
         if (!response.ok) {
             if (response.status === 401) {
@@ -191,6 +192,7 @@ async function apiRequest(endpoint, options = {}) {
 
         return await response.json();
     } catch (error) {
+        clearTimeout(loadingTimeout);
         hideLoading();
 
         if (error.name === 'TypeError' || error.name === 'AbortError') {
@@ -205,12 +207,9 @@ async function apiRequest(endpoint, options = {}) {
 
 async function checkServerStatus() {
     try {
-        showLoading('Verificando conexao...', 'Aguarde enquanto o servidor acorda.');
         await fetch(`${API_URL}/health`);
-        hideLoading();
         return true;
     } catch (error) {
-        hideLoading();
         return false;
     }
 }
@@ -2299,6 +2298,6 @@ document.addEventListener('DOMContentLoaded', () => {
             initDisponibilidadePage();
             break;
         default:
-            checkServerStatus();
+            hideLoading();
     }
 });
