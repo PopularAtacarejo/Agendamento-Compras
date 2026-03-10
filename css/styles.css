@@ -1962,6 +1962,73 @@ body {
     border: 1px solid #bfdbfe;
 }
 
+.appointment-notice {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(31, 122, 63, 0.18);
+    background:
+        linear-gradient(135deg, rgba(31, 122, 63, 0.12), rgba(67, 168, 95, 0.06)),
+        #f7fcf8;
+    box-shadow: var(--shadow-sm);
+}
+
+.appointment-notice-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
+}
+
+.appointment-notice-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--action-gradient);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+}
+
+.appointment-notice-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+
+.appointment-notice-text {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.appointment-notice-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .appointment-notice {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .appointment-notice-actions {
+        justify-content: flex-start;
+    }
+}
+
 /* ========== Modal ========== */
 
 .modal-overlay {
