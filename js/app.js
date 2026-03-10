@@ -6,6 +6,8 @@ const API_URL = window.API_URL || 'http://localhost:8000';
 const SERVER_WAKEUP_TIMEOUT = 90000;
 const AUTH_SESSION_KEY = 'auth_session';
 const REMEMBER_ME_DURATION_MS = 24 * 60 * 60 * 1000;
+const AGENDAMENTO_NOTIFICATION_POLL_MS = 15000;
+const MAX_TRACKED_AGENDAMENTO_IDS = 200;
 
 let currentUser = null;
 let selectedComprador = null;
@@ -13,6 +15,22 @@ let selectedDate = null;
 let selectedTime = null;
 let horariosDisponiveis = [];
 let currentVisitPhoneSearch = '';
+let managedUsers = [];
+let editingUsuarioId = null;
+let buyerAgendamentoPollInterval = null;
+let buyerAgendamentoVisibilityBound = false;
+let buyerAgendamentoAudioContext = null;
+let buyerAgendamentoTitleBlinkInterval = null;
+let buyerAgendamentoOriginalTitle = document.title;
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function clearLegacyAuthKeys() {
     localStorage.removeItem('token');
@@ -142,9 +160,10 @@ function hideLoading() {
 }
 
 async function apiRequest(endpoint, options = {}) {
+    const { silent = false, ...requestOptions } = options;
     const url = `${API_URL}${endpoint}`;
     const token = getAuthToken();
-    const isFormData = options.body instanceof FormData;
+    const isFormData = requestOptions.body instanceof FormData;
     let loadingTimeout = null;
 
     const defaultHeaders = {};
@@ -156,17 +175,19 @@ async function apiRequest(endpoint, options = {}) {
     }
 
     const finalOptions = {
-        ...options,
+        ...requestOptions,
         headers: {
             ...defaultHeaders,
-            ...(options.headers || {})
+            ...(requestOptions.headers || {})
         }
     };
 
     try {
-        loadingTimeout = setTimeout(() => {
-            showLoading('Carregando dados...');
-        }, 700);
+        if (!silent) {
+            loadingTimeout = setTimeout(() => {
+                showLoading('Carregando dados...');
+            }, 700);
+        }
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), SERVER_WAKEUP_TIMEOUT);
@@ -185,7 +206,9 @@ async function apiRequest(endpoint, options = {}) {
             throw new Error(error.detail || 'Erro na requisicao');
         }
 
-        hideLoading();
+        if (!silent) {
+            hideLoading();
+        }
         if (response.status === 204) {
             return null;
         }
@@ -193,12 +216,16 @@ async function apiRequest(endpoint, options = {}) {
         return await response.json();
     } catch (error) {
         clearTimeout(loadingTimeout);
-        hideLoading();
+        if (!silent) {
+            hideLoading();
+        }
 
-        if (error.name === 'TypeError' || error.name === 'AbortError') {
-            showAlert('error', 'Servidor indisponivel', 'Nao foi possivel conectar ao servidor. Tente novamente em alguns instantes.');
-        } else {
-            showAlert('error', 'Erro', error.message);
+        if (!silent) {
+            if (error.name === 'TypeError' || error.name === 'AbortError') {
+                showAlert('error', 'Servidor indisponivel', 'Nao foi possivel conectar ao servidor. Tente novamente em alguns instantes.');
+            } else {
+                showAlert('error', 'Erro', error.message);
+            }
         }
 
         throw error;
@@ -241,6 +268,253 @@ function showAlert(type, title, message) {
         alert.style.opacity = '0';
         setTimeout(() => alert.remove(), 300);
     }, 5000);
+}
+
+function getBuyerAgendamentoSeenKey() {
+    const user = getCurrentUser();
+    if (!user || user.tipo !== 'comprador') {
+        return null;
+    }
+    return `buyer_agendamento_seen_${user.id}`;
+}
+
+function getBuyerAgendamentoSeenIds() {
+    const key = getBuyerAgendamentoSeenKey();
+    if (!key) {
+        return [];
+    }
+
+    try {
+        const raw = getAuthStorage().getItem(key);
+        const ids = JSON.parse(raw || '[]');
+        return Array.isArray(ids) ? ids.filter((id) => Number.isInteger(id)) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveBuyerAgendamentoSeenIds(ids) {
+    const key = getBuyerAgendamentoSeenKey();
+    if (!key) {
+        return;
+    }
+
+    const normalized = Array.from(new Set(
+        ids
+            .map((id) => Number(id))
+            .filter((id) => Number.isInteger(id) && id > 0)
+    )).slice(0, MAX_TRACKED_AGENDAMENTO_IDS);
+
+    getAuthStorage().setItem(key, JSON.stringify(normalized));
+}
+
+function clearBuyerAgendamentoNotificationBanner() {
+    const banner = document.getElementById('buyerAgendamentoNotice');
+    if (banner) {
+        banner.remove();
+    }
+}
+
+function dismissBuyerAgendamentoNotification() {
+    clearBuyerAgendamentoNotificationBanner();
+    stopBuyerAgendamentoTitleBlink();
+}
+
+function showBuyerAgendamentoNotificationBanner(agendamentos) {
+    const container = document.getElementById('alertContainer');
+    if (!container || !agendamentos.length) {
+        return;
+    }
+
+    const ultimoAgendamento = agendamentos[0];
+    clearBuyerAgendamentoNotificationBanner();
+
+    const banner = document.createElement('div');
+    banner.id = 'buyerAgendamentoNotice';
+    banner.className = 'appointment-notice fade-in';
+    banner.innerHTML = `
+        <div class="appointment-notice-content">
+            <span class="appointment-notice-icon">AG</span>
+            <div>
+                <div class="appointment-notice-title">
+                    ${agendamentos.length === 1 ? 'Novo agendamento recebido' : `${agendamentos.length} novos agendamentos recebidos`}
+                </div>
+                <div class="appointment-notice-text">
+                    Ultimo cadastro: ${escapeHtml(ultimoAgendamento.nome_vendedor || 'Vendedor nao informado')} para ${formatDate(ultimoAgendamento.data_hora)} as ${formatTime(ultimoAgendamento.data_hora)}.
+                </div>
+            </div>
+        </div>
+        <div class="appointment-notice-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="dismissBuyerAgendamentoNotification()">Dispensar</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="handleBuyerNotificationAction()">Ver agendamentos</button>
+        </div>
+    `;
+
+    container.prepend(banner);
+}
+
+function stopBuyerAgendamentoTitleBlink() {
+    if (buyerAgendamentoTitleBlinkInterval) {
+        clearInterval(buyerAgendamentoTitleBlinkInterval);
+        buyerAgendamentoTitleBlinkInterval = null;
+    }
+    document.title = buyerAgendamentoOriginalTitle;
+}
+
+function startBuyerAgendamentoTitleBlink(count) {
+    if (!document.hidden) {
+        return;
+    }
+
+    stopBuyerAgendamentoTitleBlink();
+    let highlighted = false;
+    buyerAgendamentoTitleBlinkInterval = setInterval(() => {
+        document.title = highlighted
+            ? `(${count}) novo agendamento`
+            : buyerAgendamentoOriginalTitle;
+        highlighted = !highlighted;
+    }, 1000);
+}
+
+function ensureBuyerAgendamentoAudioReady() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+        return null;
+    }
+
+    if (!buyerAgendamentoAudioContext) {
+        buyerAgendamentoAudioContext = new AudioContextClass();
+    }
+
+    if (buyerAgendamentoAudioContext.state === 'suspended') {
+        buyerAgendamentoAudioContext.resume().catch(() => {});
+    }
+
+    return buyerAgendamentoAudioContext;
+}
+
+function setupBuyerAgendamentoAudioUnlock() {
+    if (document.body?.dataset?.buyerAudioUnlockBound === 'true') {
+        return;
+    }
+
+    const unlock = () => {
+        ensureBuyerAgendamentoAudioReady();
+    };
+
+    document.addEventListener('pointerdown', unlock, { passive: true });
+    document.addEventListener('keydown', unlock);
+    if (document.body) {
+        document.body.dataset.buyerAudioUnlockBound = 'true';
+    }
+}
+
+function playBuyerAgendamentoSound() {
+    const context = ensureBuyerAgendamentoAudioReady();
+    if (!context) {
+        return;
+    }
+
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+    const startAt = context.currentTime;
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, startAt);
+    oscillator.frequency.exponentialRampToValueAtTime(660, startAt + 0.18);
+
+    gainNode.gain.setValueAtTime(0.001, startAt);
+    gainNode.gain.exponentialRampToValueAtTime(0.14, startAt + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, startAt + 0.32);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + 0.34);
+}
+
+async function handleBuyerNotificationAction() {
+    clearBuyerAgendamentoNotificationBanner();
+    stopBuyerAgendamentoTitleBlink();
+
+    if (document.body?.dataset?.page === 'dashboard') {
+        await renderAgendamentos();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+
+    window.location.href = 'dashboard.html';
+}
+
+async function checkForNewBuyerAgendamentos({ initialize = false } = {}) {
+    const user = getCurrentUser();
+    if (!user || user.tipo !== 'comprador') {
+        return;
+    }
+
+    const agendamentos = await loadAgendamentos({}, { silent: true, returnNullOnError: true });
+    if (!agendamentos) {
+        return;
+    }
+
+    const currentIds = agendamentos.map((item) => item.id);
+    const seenIds = getBuyerAgendamentoSeenIds();
+
+    if (initialize || !seenIds.length) {
+        saveBuyerAgendamentoSeenIds(currentIds);
+        return;
+    }
+
+    const newAgendamentos = agendamentos.filter((item) => !seenIds.includes(item.id));
+    if (!newAgendamentos.length) {
+        saveBuyerAgendamentoSeenIds(currentIds);
+        return;
+    }
+
+    saveBuyerAgendamentoSeenIds(currentIds);
+    showBuyerAgendamentoNotificationBanner(newAgendamentos);
+    showAlert(
+        'info',
+        newAgendamentos.length === 1 ? 'Novo agendamento' : 'Novos agendamentos',
+        newAgendamentos.length === 1
+            ? 'Um novo agendamento foi feito para voce.'
+            : `${newAgendamentos.length} novos agendamentos foram feitos para voce.`
+    );
+    playBuyerAgendamentoSound();
+    startBuyerAgendamentoTitleBlink(newAgendamentos.length);
+
+    if (document.body?.dataset?.page === 'dashboard') {
+        await renderAgendamentos();
+    }
+}
+
+function startBuyerAgendamentoNotifications() {
+    const user = getCurrentUser();
+    if (!user || user.tipo !== 'comprador') {
+        return;
+    }
+
+    if (buyerAgendamentoPollInterval) {
+        return;
+    }
+
+    buyerAgendamentoOriginalTitle = document.title;
+    setupBuyerAgendamentoAudioUnlock();
+    checkForNewBuyerAgendamentos({ initialize: true });
+
+    buyerAgendamentoPollInterval = window.setInterval(() => {
+        checkForNewBuyerAgendamentos();
+    }, AGENDAMENTO_NOTIFICATION_POLL_MS);
+
+    if (!buyerAgendamentoVisibilityBound) {
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                stopBuyerAgendamentoTitleBlink();
+                checkForNewBuyerAgendamentos();
+            }
+        });
+        buyerAgendamentoVisibilityBound = true;
+    }
 }
 
 function formatDate(date) {
@@ -583,6 +857,12 @@ async function confirmPasswordReset(email, codigo, novaSenha) {
 }
 
 function logout() {
+    if (buyerAgendamentoPollInterval) {
+        clearInterval(buyerAgendamentoPollInterval);
+        buyerAgendamentoPollInterval = null;
+    }
+    stopBuyerAgendamentoTitleBlink();
+    clearBuyerAgendamentoNotificationBanner();
     clearAuthSession();
     currentUser = null;
     window.location.href = 'index.html';
@@ -783,7 +1063,8 @@ async function criarAgendamento(dados) {
     }
 }
 
-async function loadAgendamentos(filters = {}) {
+async function loadAgendamentos(filters = {}, requestOptions = {}) {
+    const { returnNullOnError = false, ...apiOptions } = requestOptions;
     try {
         let url = '/agendamentos';
         const params = new URLSearchParams();
@@ -796,10 +1077,10 @@ async function loadAgendamentos(filters = {}) {
             url += `?${params.toString()}`;
         }
 
-        return await apiRequest(url);
+        return await apiRequest(url, apiOptions);
     } catch (error) {
         console.error('Erro ao carregar agendamentos:', error);
-        return [];
+        return returnNullOnError ? null : [];
     }
 }
 
@@ -865,6 +1146,28 @@ async function criarUsuarioSistema(dados) {
         });
     } catch (error) {
         return null;
+    }
+}
+
+async function atualizarUsuarioSistema(id, dados) {
+    try {
+        return await apiRequest(`/usuarios/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(dados)
+        });
+    } catch (error) {
+        return null;
+    }
+}
+
+async function excluirUsuarioSistema(id) {
+    try {
+        await apiRequest(`/usuarios/${id}`, {
+            method: 'DELETE'
+        });
+        return true;
+    } catch (error) {
+        return false;
     }
 }
 
@@ -1516,6 +1819,7 @@ async function renderUsuarios() {
     if (!container) return;
 
     const usuarios = await loadUsuarios();
+    managedUsers = usuarios;
 
     if (!usuarios.length) {
         container.innerHTML = `
@@ -1531,13 +1835,133 @@ async function renderUsuarios() {
     container.innerHTML = usuarios.map((usuario) => `
         <div class="card mb-3 fade-in">
             <div class="card-body">
-                <h3 style="font-size:16px; font-weight:600; margin-bottom:8px;">${usuario.nome}</h3>
-                <p class="text-muted mb-2"><strong>Email:</strong> ${usuario.email}</p>
-                <p class="text-muted mb-2"><strong>Perfil:</strong> ${usuario.tipo}</p>
-                <p class="text-muted"><strong>Status:</strong> ${usuario.ativo ? 'ativo' : 'inativo'}</p>
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+                    <div>
+                        <h3 style="font-size:16px; font-weight:600; margin-bottom:8px;">${escapeHtml(usuario.nome)}</h3>
+                        <p class="text-muted mb-2"><strong>Email:</strong> ${escapeHtml(usuario.email)}</p>
+                        <p class="text-muted mb-2"><strong>Perfil:</strong> ${escapeHtml(usuario.tipo)}</p>
+                        <p class="text-muted mb-2"><strong>Status:</strong> ${usuario.ativo ? 'ativo' : 'inativo'}</p>
+                        ${usuario.id === currentUser?.id ? '<p class="text-muted">Use "Meu Perfil" para alterar sua propria conta.</p>' : ''}
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button
+                            type="button"
+                            class="btn btn-secondary btn-sm"
+                            onclick="startUserEdit(${usuario.id})"
+                            ${usuario.id === currentUser?.id ? 'disabled' : ''}
+                        >
+                            Editar
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-danger btn-sm"
+                            onclick="handleDeleteUsuario(${usuario.id})"
+                            ${usuario.id === currentUser?.id ? 'disabled' : ''}
+                        >
+                            Excluir
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     `).join('');
+}
+
+function resetUsuarioForm() {
+    const form = document.getElementById('usuarioForm');
+    const idEl = document.getElementById('usuarioIdEdicao');
+    const titleEl = document.getElementById('usuarioFormTitle');
+    const subtitleEl = document.getElementById('usuarioFormSubtitle');
+    const submitButton = document.getElementById('usuarioSubmitButton');
+    const cancelButton = document.getElementById('cancelarEdicaoUsuario');
+    const noticeEl = document.getElementById('usuarioEditNotice');
+    const senhaInput = document.getElementById('senhaUsuario');
+    const senhaLabel = document.getElementById('senhaUsuarioLabel');
+    const senhaHint = document.getElementById('senhaUsuarioHint');
+    const ativoEl = document.getElementById('ativoUsuario');
+
+    editingUsuarioId = null;
+
+    if (form) form.reset();
+    if (idEl) idEl.value = '';
+    if (titleEl) titleEl.textContent = 'Criar usuario';
+    if (subtitleEl) subtitleEl.textContent = 'Preencha os dados abaixo';
+    if (submitButton) submitButton.textContent = 'Criar usuario';
+    if (cancelButton) cancelButton.classList.add('hidden');
+    if (noticeEl) noticeEl.classList.add('hidden');
+    if (senhaInput) senhaInput.required = true;
+    if (senhaLabel) senhaLabel.classList.add('required');
+    if (senhaHint) senhaHint.classList.add('hidden');
+    if (ativoEl) ativoEl.checked = true;
+}
+
+function startUserEdit(userId) {
+    const usuario = managedUsers.find((item) => item.id === userId);
+    if (!usuario) {
+        showAlert('error', 'Usuario nao encontrado', 'Nao foi possivel carregar os dados do usuario selecionado.');
+        return;
+    }
+
+    const nomeEl = document.getElementById('nomeUsuario');
+    const emailEl = document.getElementById('emailUsuario');
+    const senhaEl = document.getElementById('senhaUsuario');
+    const tipoEl = document.getElementById('tipoUsuario');
+    const ativoEl = document.getElementById('ativoUsuario');
+    const idEl = document.getElementById('usuarioIdEdicao');
+    const titleEl = document.getElementById('usuarioFormTitle');
+    const subtitleEl = document.getElementById('usuarioFormSubtitle');
+    const submitButton = document.getElementById('usuarioSubmitButton');
+    const cancelButton = document.getElementById('cancelarEdicaoUsuario');
+    const noticeEl = document.getElementById('usuarioEditNotice');
+    const senhaHint = document.getElementById('senhaUsuarioHint');
+    const senhaLabel = document.getElementById('senhaUsuarioLabel');
+
+    editingUsuarioId = usuario.id;
+
+    if (nomeEl) nomeEl.value = usuario.nome || '';
+    if (emailEl) emailEl.value = usuario.email || '';
+    if (senhaEl) {
+        senhaEl.value = '';
+        senhaEl.required = false;
+    }
+    if (tipoEl) tipoEl.value = usuario.tipo || 'comprador';
+    if (ativoEl) ativoEl.checked = Boolean(usuario.ativo);
+    if (idEl) idEl.value = String(usuario.id);
+    if (titleEl) titleEl.textContent = 'Editar usuario';
+    if (subtitleEl) subtitleEl.textContent = `Atualize os dados de ${usuario.nome}.`;
+    if (submitButton) submitButton.textContent = 'Salvar alteracoes';
+    if (cancelButton) cancelButton.classList.remove('hidden');
+    if (noticeEl) noticeEl.classList.remove('hidden');
+    if (senhaHint) senhaHint.classList.remove('hidden');
+    if (senhaLabel) senhaLabel.classList.remove('required');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelUserEdit() {
+    resetUsuarioForm();
+}
+
+async function handleDeleteUsuario(userId) {
+    const usuario = managedUsers.find((item) => item.id === userId);
+    if (!usuario) {
+        showAlert('error', 'Usuario nao encontrado', 'Nao foi possivel localizar o usuario selecionado.');
+        return;
+    }
+
+    if (!window.confirm(`Deseja realmente excluir o usuario ${usuario.nome}?`)) {
+        return;
+    }
+
+    const deleted = await excluirUsuarioSistema(userId);
+    if (!deleted) return;
+
+    if (editingUsuarioId === userId) {
+        resetUsuarioForm();
+    }
+
+    showAlert('success', 'Usuario excluido', `Usuario ${usuario.nome} excluido com sucesso.`);
+    await renderUsuarios();
 }
 
 function getNextAvailableSlot() {
@@ -1999,6 +2423,7 @@ function initDashboardPage() {
     updateCurrentUserUI();
     initProfileMenu();
     syncProfileNav();
+    startBuyerAgendamentoNotifications();
 
     setupTabs();
     renderAgendamentos();
@@ -2031,6 +2456,15 @@ function initUsuariosPage() {
     }
 
     const form = document.getElementById('usuarioForm');
+    const cancelButton = document.getElementById('cancelarEdicaoUsuario');
+    resetUsuarioForm();
+
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            cancelUserEdit();
+        });
+    }
+
     if (form) {
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -2038,17 +2472,31 @@ function initUsuariosPage() {
             const payload = {
                 nome: document.getElementById('nomeUsuario').value,
                 email: document.getElementById('emailUsuario').value,
-                senha: document.getElementById('senhaUsuario').value,
                 tipo: document.getElementById('tipoUsuario').value,
                 ativo: document.getElementById('ativoUsuario').checked
             };
+            const senha = document.getElementById('senhaUsuario').value;
+
+            if (editingUsuarioId) {
+                if (senha) {
+                    payload.senha = senha;
+                }
+
+                const usuarioAtualizado = await atualizarUsuarioSistema(editingUsuarioId, payload);
+                if (usuarioAtualizado) {
+                    showAlert('success', 'Usuario atualizado', `Usuario ${usuarioAtualizado.nome} atualizado com sucesso.`);
+                    resetUsuarioForm();
+                    await renderUsuarios();
+                }
+                return;
+            }
+
+            payload.senha = senha;
 
             const usuarioCriado = await criarUsuarioSistema(payload);
             if (usuarioCriado) {
                 showAlert('success', 'Usuario criado', `Usuario ${usuarioCriado.nome} criado com sucesso.`);
-                form.reset();
-                const ativoEl = document.getElementById('ativoUsuario');
-                if (ativoEl) ativoEl.checked = true;
+                resetUsuarioForm();
                 renderUsuarios();
             }
         });
@@ -2096,6 +2544,9 @@ function initPerfilPage() {
     initProfileMenu();
     syncProfileNav();
     initPasswordToggles();
+    if (currentUser.tipo === 'comprador') {
+        startBuyerAgendamentoNotifications();
+    }
     loadMeuPerfil().then((user) => {
         if (!user) return;
         const nomeEl = document.getElementById('perfilNome');
@@ -2214,6 +2665,7 @@ function initDisponibilidadePage() {
     updateCurrentUserUI();
     initProfileMenu();
     syncProfileNav();
+    startBuyerAgendamentoNotifications();
 
     const monthFilter = document.getElementById('mesDisponibilidade');
     const dateTimeInput = document.getElementById('novaDisponibilidade');
