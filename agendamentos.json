@@ -1,3 +1,18 @@
 {
-  "agendamentos": []
+  "agendamentos": [
+    {
+      "id": 1,
+      "comprador_id": 1,
+      "vendedor_id": null,
+      "nome_vendedor": "Jeferson Da Silva Santos",
+      "empresa_vendedor": null,
+      "telefone_vendedor": "82999158412",
+      "email_vendedor": "popularatacarejomkt@gmail.com",
+      "data_hora": "2026-03-10T13:30:00",
+      "status": "pendente",
+      "observacoes": "olá",
+      "criado_em": "2026-03-10T12:55:24",
+      "atualizado_em": "2026-03-10T12:55:24"
+    }
+  ]
 }
