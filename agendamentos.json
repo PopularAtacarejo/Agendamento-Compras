@@ -1,1 +1,11 @@
-[]
+{
+  "agendamentos": [],
+  "disponibilidades": [
+    {
+      "id": 1,
+      "comprador_id": 6,
+      "data_hora": "2026-03-25T09:00:00",
+      "criado_em": "2026-03-24T11:51:36"
+    }
+  ]
+}
